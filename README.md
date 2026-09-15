@@ -108,7 +108,7 @@ The following table demonstrates the inherent trade-off between quadrature resol
 While `TorchSymPy` achieves numeric parity with `SciPy` for well-behaved integrals (like $\int x^{-x} dx$), evaluating conditionally convergent oscillatory integrals over infinite domains numerically pushes *all* quadrature engines to their breaking points. 
 
 Consider the famously difficult oscillatory integral:
-$$ \int_0^\infty \frac{\sin(x)}{\sqrt{x^2 + 1}} dx $$
+$ \int_0^\infty \frac{\sin(x)}{\sqrt{x^2 + 1}} dx $
 
 The true, analytical exact value (calculated symbolically via SymPy hypergeometric functions) is `0.873084`. However, if we force pure numerical evaluation without symbolic reduction:
 
