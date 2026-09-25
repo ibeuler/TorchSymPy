@@ -84,7 +84,7 @@ def test_vectorized_and_batched_gaussian_match(torchsympy_instance, sp, torch, d
         dtype=dtype,
         chunk_size_params=32,
     )
-    vectorized_re = texpr.torchquad_integrate_vectorized(
+    vectorized_re, vectorized_im = texpr.torchquad_integrate_vectorized(
         params_values=[p_grid],
         method=GaussLegendre(),
         N=201,

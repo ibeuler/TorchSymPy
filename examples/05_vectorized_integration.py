@@ -43,12 +43,12 @@ def main():
     
     print("\nVectorized Evaluation...")
     # Signature matches alphabetical symbols: a, b
-    result = texpr.torchquad_integrate_vectorized(
+    result, _ = texpr.torchquad_integrate_vectorized(
         params_values=[a_grid, b_grid],
         method=GaussLegendre(),
         N=21
     )
-    re = result.real    
+    re = result
     print(f"\nResult shape: {re.shape} -> Note that it returned shape (3, 4) properly!")
     print("Results matrix (a along rows, b along cols):")
     print(re)

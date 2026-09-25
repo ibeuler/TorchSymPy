@@ -172,7 +172,7 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
                 
                 t_vec = _perf_best_of(_run_vectorized, repeats=3)
                 t_TorchSymPy = _perf_best_of(_run_TorchSymPy, repeats=3)
-                re_vec = _run_vectorized()
+                re_vec, im_vec = _run_vectorized()
                 re_sym, im_sym = _run_TorchSymPy()
                 
                 err_vec = float((re_vec - ref_tensor).abs().max().item())
@@ -208,6 +208,16 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
                 t_scipy_subset = _perf_best_of(_run_scipy_subset, repeats=1)
                 scipy_ms_per_point = (t_scipy_subset / float(scipy_subset_points)) * 1000.0
 
+                # SciPy quad_vec integration mapping
+                def _run_scipy_quad_vec_subset():
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", IntegrationWarning)
+                        scipy_integrate.quad_vec(lambda x: case.scipy_re(x, p_cpu), case.limits[0][1], case.limits[0][2], limit=scipy_limit)
+                        scipy_integrate.quad_vec(lambda x: case.scipy_im(x, p_cpu), case.limits[0][1], case.limits[0][2], limit=scipy_limit)
+
+                t_scipy_quad_vec_subset = _perf_best_of(_run_scipy_quad_vec_subset, repeats=1)
+                scipy_quad_vec_ms_per_point = (t_scipy_quad_vec_subset / float(scipy_subset_points)) * 1000.0
+
                 # 6. Verdict Calculation
                 vectorized_speedup = scipy_ms_per_point / vectorized_ms_per_point if vectorized_ms_per_point > 0 else 0.0
                 batched_speedup = scipy_ms_per_point / TorchSymPy_ms_per_point if TorchSymPy_ms_per_point > 0 else 0.0
@@ -219,6 +229,7 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
                     "vectorized_ms": vectorized_ms_per_point,
                     "TorchSymPy_ms": TorchSymPy_ms_per_point,
                     "scipy_ms": scipy_ms_per_point,
+                    "scipy_quad_vec_ms": scipy_quad_vec_ms_per_point,
                     "vectorized_speedup": vectorized_speedup,
                     "batched_speedup": batched_speedup,
                     "err_vec": err_vec,
@@ -233,9 +244,9 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
     results_dir.mkdir(parents=True, exist_ok=True)
     
     print("\n--- Ultimate Benchmark Results ---")
-    print(f"{'Case':<20} | {'Grid':<6} | {'N':<5} | {'Vec ms':<10} | {'Bat ms':<10} | {'SciPy ms':<10} | {'Vec Err':<10} | {'Bat Err':<10} | {'Bat Speedup':<10}")
+    print(f"{'Case':<20} | {'Grid':<6} | {'N':<5} | {'Vec ms':<10} | {'Bat ms':<10} | {'SciPy ms':<10} | {'SciPy qv ms':<11} | {'Vec Err':<10} | {'Bat Err':<10} | {'Bat Speedup':<10}")
     for r in results:
-        print(f"{r['case']:<20} | {r['grid']:<6} | {r['N']:<5} | {r['vectorized_ms']:10.5f} | {r['TorchSymPy_ms']:10.5f} | {r['scipy_ms']:10.5f} | {r['err_vec']:10.2e} | {r['err_sym']:10.2e} | {r['batched_speedup']:10.1f}x")
+        print(f"{r['case']:<20} | {r['grid']:<6} | {r['N']:<5} | {r['vectorized_ms']:10.5f} | {r['TorchSymPy_ms']:10.5f} | {r['scipy_ms']:10.5f} | {r['scipy_quad_vec_ms']:11.5f} | {r['err_vec']:10.2e} | {r['err_sym']:10.2e} | {r['batched_speedup']:10.1f}x")
 
     # Output LaTeX Table
     case_latex = {
@@ -249,52 +260,69 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
     for r in results:
         grouped_results[r["case"]].append(r)
 
-    tex_lines = [
-        "\\begin{table}[h]",
-        "\\centering",
-        "\\resizebox{\\columnwidth}{!}{%",
-        "\\begin{tabular}{l c c c c c c c c c c}",
-        "\\toprule",
-    ]
-    header_row = (
-        "\\textbf{Case} & \\textbf{Grid} & \\textbf{N} & \\textbf{Vectorized (ms)} & "
-        "\\textbf{Batched (ms)} & \\textbf{SciPy (ms)} & \\textbf{Vec Speedup} & "
-        "\\textbf{Bat Speedup} & \\textbf{Vec Err} & \\textbf{Bat Err} & \\textbf{SciPy Err} "
-        + r"\\"
-    )
-    tex_lines.append(header_row)
-    tex_lines.append("\\midrule")
-
-    for index, (cname, rlist) in enumerate(grouped_results.items()):
+    tex_lines = []
+    
+    for cname, rlist in grouped_results.items():
         safe_case = case_latex.get(cname, cname.replace("_", "\\_"))
-        row_count = len(rlist)
-        for row_index, r in enumerate(rlist):
-            case_cell = f"\\multirow{{{row_count}}}{{*}}{{{safe_case}}}" if row_index == 0 else ""
-            tex_lines.append(
-                f"{case_cell} & {r['grid']} & {r['N']} & {r['vectorized_ms']:.5f} & {r['TorchSymPy_ms']:.5f} & {r['scipy_ms']:.5f} & {r['vectorized_speedup']:.1f}$\\times$ & {r['batched_speedup']:.1f}$\\times$ & {r['err_vec']:.2e} & {r['err_sym']:.2e} & {r['err_scipy']:.2e} "
-                + r"\\"
-            )
+        
+        tex_lines.extend([
+            "\\begin{table}[h]",
+            "\\centering",
+            "\\resizebox{\\columnwidth}{!}{%",
+            "\\begin{tabular}{l c c c c}",
+            "\\toprule",
+            "\\textbf{Method} & \\textbf{N} & \\textbf{ms/pt} & \\textbf{Speedup} & \\textbf{Error} \\\\",
+            "\\midrule",
+            "\\multicolumn{5}{c}{\\textbf{" + safe_case + "}} \\\\",
+            "\\midrule"
+        ])
+        
+        # We assume SciPy metrics are consistent across Ns for the same case, so we grab the first one
+        r_first = rlist[0]
+        tex_lines.append(f"SciPy \\texttt{{quad}} & Auto & {r_first['scipy_ms']:.5f} & 1.0$\\times$ & {r_first['err_scipy']:.2e} \\\\")
+        scipy_vec_speedup = r_first['scipy_ms'] / r_first['scipy_quad_vec_ms'] if r_first['scipy_quad_vec_ms'] > 0 else 0
+        tex_lines.append(f"SciPy \\texttt{{quad\\_vec}} & Auto & {r_first['scipy_quad_vec_ms']:.5f} & {scipy_vec_speedup:.1f}$\\times$ & {r_first['err_scipy']:.2e} \\\\")
+        tex_lines.append("\\midrule")
+        
+        for r in rlist:
+            tex_lines.append(f"TSP Vectorized & {r['N']} & {r['vectorized_ms']:.5f} & {r['vectorized_speedup']:.1f}$\\times$ & {r['err_vec']:.2e} \\\\")
+            tex_lines.append(f"TSP Batched & {r['N']} & {r['TorchSymPy_ms']:.5f} & {r['batched_speedup']:.1f}$\\times$ & {r['err_sym']:.2e} \\\\")
+            if r != rlist[-1]:
+                tex_lines.append("\\hdashline")
+                
+        tex_lines.extend([
+            "\\bottomrule",
+            "\\end{tabular}",
+            "}",
+            f"\\caption{{Benchmark Results for {cname.replace('_', ' ')}}}",
+            f"\\label{{tab:bench_{cname}}}",
+            "\\end{table}",
+            ""
+        ])
 
-        if index < len(grouped_results) - 1:
-            tex_lines.append("\\hline")
-
-    tex_lines.extend([
-        "\\bottomrule",
-        "\\end{tabular}",
-        "}",
-        "\\caption{Universal Benchmark Results: Vectorized and Batched TorchSymPy vs SciPy (ms/point)}",
-        "\\label{tab:universal_benchmark}",
-        "\\end{table}",
-    ])
     (results_dir / "ultimate_universal_benchmark.tex").write_text("\n".join(tex_lines), encoding="utf-8")
 
     # Output Markdown
-    md_lines = ["| Case Name | Grid | N | Vectorized ms/pt | Batched ms/pt | SciPy ms/pt | Vectorized Speedup | Batched Speedup | Vectorized Err | Batched Err | SciPy Err |", "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |"]
-    for r in results:
-        md_lines.append(f"| {r['case']} | {r['grid']} | {r['N']} | `{r['vectorized_ms']:.5f}` | `{r['TorchSymPy_ms']:.5f}` | `{r['scipy_ms']:.5f}` | **{r['vectorized_speedup']:.1f}x** | **{r['batched_speedup']:.1f}x** | `{r['err_vec']:.2e}` | `{r['err_sym']:.2e}` | `{r['err_scipy']:.2e}` |")
+    md_lines = []
+    
+    for cname, rlist in grouped_results.items():
+        md_lines.extend([
+            f"### Benchmark Results for {cname.replace('_', ' ')}",
+            "",
+            "| Method | N | ms/pt | Speedup | Error |",
+            "| :--- | :--- | :--- | :--- | :--- |"
+        ])
         
-    md_text = "\n".join(md_lines)
-    (results_dir / "ultimate_universal_benchmark.md").write_text(md_text, encoding="utf-8")
+        r_first = rlist[0]
+        md_lines.append(f"| SciPy `quad` | Auto | `{r_first['scipy_ms']:.5f}` | 1.0x | `{r_first['err_scipy']:.2e}` |")
+        scipy_vec_speedup = r_first['scipy_ms'] / r_first['scipy_quad_vec_ms'] if r_first['scipy_quad_vec_ms'] > 0 else 0
+        md_lines.append(f"| SciPy `quad_vec` | Auto | `{r_first['scipy_quad_vec_ms']:.5f}` | **{scipy_vec_speedup:.1f}x** | `{r_first['err_scipy']:.2e}` |")
+        
+        for r in rlist:
+            md_lines.append(f"| TSP Vectorized | {r['N']} | `{r['vectorized_ms']:.5f}` | **{r['vectorized_speedup']:.1f}x** | `{r['err_vec']:.2e}` |")
+            md_lines.append(f"| TSP Batched | {r['N']} | `{r['TorchSymPy_ms']:.5f}` | **{r['batched_speedup']:.1f}x** | `{r['err_sym']:.2e}` |")
+            
+        md_lines.append("")
 
     # 4. Output graphs for the benchmark suite and notebook-style examples.
     graph_dir = bench_dir / "graphs"
@@ -453,8 +481,8 @@ def test_sympy_vs_gauss_legendre_benchmark(torchsympy_instance, sp, torch, devic
                     "gauss_ms": (torch_time * 1000.0),
                     "speedup": (sym_time / torch_time) if torch_time > 0 else 0.0,
                         "sympy_value": float(complex(sym_result).real),
-                        "gauss_value": float(complex(torch_result.item()).real),
-                    "abs_err": float((torch_result - reference).abs().item()),
+                        "gauss_value": float(complex(torch_result[0].item()).real),
+                    "abs_err": float((torch_result[0] - reference).abs().item()),
                 })
 
     project_root = Path(__file__).resolve().parents[1]
@@ -543,3 +571,6 @@ def test_sympy_vs_gauss_legendre_benchmark(torchsympy_instance, sp, torch, devic
     plt.close(fig)
 
     print("# SymPy vs Gauss-Legendre benchmark complete. Graphs and tables generated.")
+
+if __name__ == '__main__':
+    test_ultimate_benchmark()

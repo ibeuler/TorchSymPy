@@ -10,8 +10,14 @@ convenient imports.
 """
 
 from .main import (
-	TorchSymPy,
+	MAX_ELEMENTS_PER_EVALUATION,
+	MEMORY_FRACTION_PER_EVALUATION,
+	TEMPORARIES_PER_EVALUATION,
 	TorchExpr,
+	TorchSymPy,
+	clear_caches,
+	elements_budget,
+	setup_logging,
 )
 
 try:
@@ -23,10 +29,16 @@ try:
 	except Exception:
 		__version__ = _pkg_version("torchsympy")
 except Exception:
-	__version__ = "0.3.0"
+	__version__ = "0.4.0"
 
 __all__ = [
-	"TorchSymPy",
+	"MAX_ELEMENTS_PER_EVALUATION",
+	"MEMORY_FRACTION_PER_EVALUATION",
+	"TEMPORARIES_PER_EVALUATION",
 	"TorchExpr",
+	"TorchSymPy",
+	"clear_caches",
+	"elements_budget",
+	"setup_logging",
 	"__version__",
 ]
