@@ -9,20 +9,20 @@
 
 ---
 
-**TorchSymPy** bridges the gap between SymPy's symbolic manipulation and PyTorch's highly optimized batched tensor operations. You can transcompile symbolic integrals directly into callable PyTorch engines capable of extremely fast, batched evaluation on GPUs and CPUs.
+**TorchSymPy** bridges the gap between SymPy's symbolic mathematics and PyTorch's highly optimized, GPU-accelerated tensor operations. By employing a unique "compile-once, evaluate-many" architecture, you can transcompile symbolic integrals into native PyTorch engines capable of extremely fast, zero-overhead numerical evaluation across massive parameter grids.
 
-*Note: this module was first developed for [libphysics](https://github.com/ferhatpy/libphysics) — then split out into a standalone library to tackle generalized parallel computational bottlenecks.*
+*Note: this module was first developed for [libphysics](https://github.com/ferhatpy/libphysics) — then split out into a standalone library to tackle generalized parallel computational bottlenecks in integration.*
 
 ---
 
 ## Why TorchSymPy?
 
-When working with analytical integrals in computational physics or machine learning, researchers often hit a bottleneck: 
-1. **SymPy** is great for exact manipulation but painfully slow (or fails) for heavy numeric evaluation.
-2. **SciPy** (e.g. `scipy.integrate.nquad`) is highly accurate but inherently sequential and single-threaded. 
-3. **PyTorch** thrives on massively parallel grid evaluations, but writing integrators by hand is tedious.
+When working with analytical integrals in computational physics, optics, or machine learning, researchers often hit performance bottlenecks: 
+1. **SymPy** is great for exact mathematical manipulation but is painfully slow (or completely fails) for heavy numerical grid evaluations.
+2. **SciPy** (e.g., `scipy.integrate.quad`) is highly accurate but inherently sequential, single-threaded, and cannot natively leverage GPUs. 
+3. **PyTorch** thrives on massively parallel grid evaluations, but writing structural integrators by hand is tedious and error-prone.
 
-**TorchSymPy** gives you the best of all worlds. You write math in `SymPy`, and TorchSymPy transpiles it into highly optimized `TorchExpr` kernels that run up to **2,700x faster** than `SciPy` by leveraging `torchquad` and massively batched GPU architectures.
+**TorchSymPy** gives you the best of all worlds. You write the math symbolically in `SymPy`, and TorchSymPy applies automated changes-of-variables (to handle infinite domains) and structural optimizations before transpiling it into highly optimized `TorchExpr` kernels. These kernels can run up to **3,400x faster** than `SciPy` by leveraging tensor-product grids and batched GPU execution.
 
 ## Installation
 
@@ -72,18 +72,18 @@ re, im = texpr.torch_integrate_batched(
 print(f"Real part shape: {re.shape}") # Output: torch.Size([10000])
 ```
 
-## Core Concepts: Integration Methods
+## Core Concepts: Solvers and Backends
 
-Once you compile an expression, `TorchSymPy` provides three execution paths depending on your memory and scaling constraints:
+Once you define a symbolic integration expression, `TorchSymPy` provides distinct evaluation paths tailored to your mathematical structure and parameter scale:
 
-### 1. Batched Path: `torch_integrate_batched()` (Recommended)
-This is the primary workhorse for large parameter sweeps. It automatically handles shape broadcasting, batches execution in chunks to prevent Out-Of-Memory (OOM) errors, and manages device placement. It is the safest and most structured way to evaluate dense multidimensional grids.
+### 1. `eval_numeric` (The Smart Wrapper)
+This is the recommended high-level entry point. It traverses the SymPy expression tree and detects mathematical structures that can be vastly optimized. For instance, in highly oscillatory multi-dimensional integrals (like Fresnel diffraction), it automatically factors the problem into a **separable** path, avoiding the catastrophic $\mathcal{O}(N^d)$ exponential blowup of tensor-product grids. It also features a **shift-invariant** convolution path and controls automatic mesh refinement.
 
-### 2. Vectorized Path: `torchquad_integrate_vectorized()`
-This is the raw, broadcasting-first path. It passes unstructured parameter tensors directly into the integrand. You are completely responsible for ensuring that the parameter grids broadcast correctly against the spatial integration domain. While riskier for OOM errors, it can yield slightly higher throughput on specific architectures by eliminating chunking overhead.
+### 2. `torch_integrate_batched()` (Native Batched Backend)
+The workhorse for small-to-large deterministic parameter sweeps. This backend natively implements PyTorch tensor-product rules (Gauss-Legendre, Simpson). It features **zero setup overhead** ($\approx 1.3$ ms for evaluation) because it globally caches its quadrature grids and entirely skips dynamic object instantiation, achieving up to 100x speedups over traditional numerical wrappers on small batches. It cleanly chunks evaluations to prevent OOM limits.
 
-### 3. Loop-Driven Path: `torchquad_integrate()`
-This is a simpler, unbatched evaluation method. Instead of projecting the entire parameter space onto the GPU at once, it accepts a simple 1D array of parameter combinations and internally loops through them. Use this when memory is severely constrained, or when you only need to evaluate a handful of distinct parameter points rather than a massive grid sweep.
+### 3. `torchquad_integrate_vectorized()` (Vectorized Backend)
+Delegates evaluation entirely to the external `torchquad` library. It uses dynamic PyTorch broadcasting to avoid creating dense parameter meshgrids in memory. However, because it dynamically instantiates `IntegrationGrid` objects and performs an $\mathcal{O}(N^3)$ eigenvalue solve on every call, it carries a severe **$\approx 150$ ms fixed overhead**. It should only be used for massive parameter grids ($\ge 10^5$ points) where this fixed penalty is amortized, or when utilizing stochastic rules like Monte Carlo in $d \ge 4$ dimensions.
 
 ## Benchmarks: Speed Gains & Accuracy vs. SciPy & SymPy
 

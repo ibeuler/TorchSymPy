@@ -68,11 +68,13 @@ def example_2_parametric_fourier_transform() -> None:
         params_values=k_grid, N=401, method="gauss-legendre", chunk_size_params=64
     )
     reference = SQRT_PI * torch.exp(-k_grid.squeeze(-1) ** 2 / 4)
+    re_cpu = re_part.detach().cpu()
+    im_cpu = im_part.detach().cpu()
     print(f"    k          = {[f'{v:+.2f}' for v in k_grid.flatten().tolist()]}")
-    print(f"    Re(result) = {[f'{v:.10f}' for v in re_part.tolist()]}")
+    print(f"    Re(result) = {[f'{v:.10f}' for v in re_cpu.tolist()]}")
     print(f"    reference  = {[f'{v:.10f}' for v in reference.tolist()]}")
-    print(f"    max |Re - ref| = {float((re_part - reference).abs().max()):.3e}")
-    print(f"    max |Im|       = {float(im_part.abs().max()):.3e}   (exactly 0 by symmetry)")
+    print(f"    max |Re - ref| = {float((re_cpu - reference).abs().max()):.3e}")
+    print(f"    max |Im|       = {float(im_cpu.abs().max()):.3e}   (exactly 0 by symmetry)")
 
 
 def example_3_oscillatory_fresnel() -> None:

@@ -58,3 +58,7 @@ htmlcov/
 torchquad_vs_libtorch.ipynb
 # Testing documentation
 tests/TESTING_DOCUMENTATION.md
+
+# Optics examples and output
+examples/*_optics.py
+examples/output/optics/
