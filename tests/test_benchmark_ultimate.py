@@ -433,8 +433,7 @@ def test_sympy_vs_gauss_legendre_benchmark(torchsympy_instance, sp, torch, devic
     dtype = torch.float64
     scipy = pytest.importorskip("scipy")
     import numpy as np
-    import matplotlib
-
+    matplotlib = pytest.importorskip("matplotlib")
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
