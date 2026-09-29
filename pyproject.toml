@@ -10,7 +10,7 @@ where = ["src"]
 
 [project]
 name = "torchsympy"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
   { name="Ibrahim H.I. Abushawish", email="ibrahim.hamed2701@gmail.com" },
 ]
@@ -23,7 +23,7 @@ dependencies = [
   "torch>=2.5.1",
   "sympy>=1.13.1",
   "torchquad>=0.5.0",
-  "numpy>=2.4.2",
+  "numpy>=2.2.6",
   "scipy>=1.17.0",
   "loguru>=0.7.3",
 ]

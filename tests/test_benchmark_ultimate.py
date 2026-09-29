@@ -33,8 +33,13 @@ class UltimateCase:
 def _perf_best_of(func, repeats: int = 3):
     best = float("inf")
     for _ in range(repeats):
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
         t0 = time.perf_counter()
         func()
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
         t = time.perf_counter() - t0
         best = min(best, t)
     return best
@@ -141,18 +146,7 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
                 p_grid = torch.linspace(cfg.k_min, cfg.k_max, cfg.grid_points, device=device, dtype=dtype).unsqueeze(-1)
                 ref_tensor = case.ref_fn(p_grid.squeeze(-1))
 
-                # 3. Warm-up GPU cache
-                _ = texpr.torchquad_integrate_vectorized(
-                    params_values=[p_grid[:2]],
-                    method=vectorized_method,
-                    N=11,
-                )
-                _ = texpr.torch_integrate_batched(
-                    params_values=p_grid[:2],
-                    method=method, N=cfg.N, device=device, dtype=dtype, chunk_size_params=2
-                )
-
-                # 4. Measure TorchSymPy Vectorized and Batched Speed
+                # 3. Full-shape warmup: run actual workload to prime CUDA kernels
                 def _run_vectorized():
                     return texpr.torchquad_integrate_vectorized(
                         params_values=[p_grid],
@@ -169,7 +163,14 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
                         dtype=dtype,
                         chunk_size_params=cfg.chunk_params,
                     )
-                
+
+                # discard warmup runs at actual shape
+                _run_vectorized()
+                _run_TorchSymPy()
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+
+                # 4. Measure TorchSymPy Vectorized and Batched Speed
                 t_vec = _perf_best_of(_run_vectorized, repeats=3)
                 t_TorchSymPy = _perf_best_of(_run_TorchSymPy, repeats=3)
                 re_vec, im_vec = _run_vectorized()
@@ -248,6 +249,12 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
     for r in results:
         print(f"{r['case']:<20} | {r['grid']:<6} | {r['N']:<5} | {r['vectorized_ms']:10.5f} | {r['TorchSymPy_ms']:10.5f} | {r['scipy_ms']:10.5f} | {r['scipy_quad_vec_ms']:11.5f} | {r['err_vec']:10.2e} | {r['err_sym']:10.2e} | {r['batched_speedup']:10.1f}x")
 
+    # canonical JSON for notebook consumption
+    import json
+    (results_dir / "ultimate_universal_benchmark.json").write_text(
+        json.dumps(results, indent=2), encoding="utf-8"
+    )
+
     # Output LaTeX Table
     case_latex = {
         "1_Gaussian": "\\makecell{1\\_Gaussian: \\\\ $\\bigint_{-\\infty}^{\\infty} e^{-p x^2}\\,dx = \\sqrt{\\frac{\\pi}{p}}$}",
@@ -323,6 +330,8 @@ def test_ultimate_universal_benchmark(torchsympy_instance, sp, torch, device, tm
             md_lines.append(f"| TSP Batched | {r['N']} | `{r['TorchSymPy_ms']:.5f}` | **{r['batched_speedup']:.1f}x** | `{r['err_sym']:.2e}` |")
             
         md_lines.append("")
+
+    (results_dir / "ultimate_universal_benchmark.md").write_text("\n".join(md_lines), encoding="utf-8")
 
     # 4. Output graphs for the benchmark suite and notebook-style examples.
     graph_dir = bench_dir / "graphs"
@@ -444,8 +453,13 @@ def test_sympy_vs_gauss_legendre_benchmark(torchsympy_instance, sp, torch, devic
     def _best_time(func, repeats: int = 3):
         best = float("inf")
         for _ in range(repeats):
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             t0 = time.perf_counter()
             value = func()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
             elapsed = time.perf_counter() - t0
             best = min(best, elapsed)
         return best, value

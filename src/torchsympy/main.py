@@ -155,6 +155,25 @@ def setup_logging(enable: bool = False, level: str = "INFO", *, sink=None) -> No
     """
     global _LOG_HANDLER_ID
 
+    import warnings
+    # Suppress PyTorch tensor copy warnings and SciPy integration warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
+    try:
+        from scipy.integrate import IntegrationWarning
+        warnings.filterwarnings("ignore", category=IntegrationWarning)
+    except ImportError:
+        pass
+
+    # Manage torchquad's noisy debug/info logs
+    try:
+        import torchquad
+        if not enable:
+            torchquad.set_log_level("WARNING")
+        else:
+            torchquad.set_log_level(level)
+    except (ImportError, AttributeError):
+        pass
+
     if _LOG_HANDLER_ID is not None:
         try:
             logger.remove(_LOG_HANDLER_ID)
