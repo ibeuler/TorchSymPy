@@ -5,9 +5,9 @@
 \toprule
 \textbf{Integral} & \textbf{eval\_numeric (ms)} & \textbf{Batched (ms)} & \textbf{Vectorized (ms)} & \textbf{EN Error} & \textbf{Bat. Error} & \textbf{Vec. Error} \\
 \midrule
-Gaussian (inf) & 2.6 & 1.0 & 113.4 & 1.49e-13 & 1.49e-13 & 2.28e-13 \\
-Fourier-Gauss (inf) & 2.9 & 1.5 & 112.4 & 9.61e-14 & 9.61e-14 & 1.51e-13 \\
-Damped cos (semi-inf) & 2.8 & 0.9 & 113.5 & 5.64e-09 & 5.64e-09 & 5.64e-09 \\
+Gaussian (inf) & 2.4 & 1.3 & 118.6 & 1.49e-13 & 1.49e-13 & 2.28e-13 \\
+Fourier-Gauss (inf) & 2.4 & 1.6 & 116.6 & 9.61e-14 & 9.61e-14 & 1.51e-13 \\
+Damped cos (semi-inf) & 2.8 & 0.9 & 114.4 & 5.64e-09 & 5.64e-09 & 5.64e-09 \\
 \bottomrule
 \end{tabular}}
 \caption{Comparison of \texttt{eval\_numeric} (smart separable path) against the batched and vectorized backends at $N=1001$ over 200 parameter values.}

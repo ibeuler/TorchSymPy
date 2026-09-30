@@ -9,7 +9,9 @@
 
 ---
 
-**TorchSymPy** bridges the gap between SymPy's symbolic mathematics and PyTorch's highly optimized, GPU-accelerated tensor operations. By employing a unique "compile-once, evaluate-many" architecture, you can transcompile symbolic integrals into native PyTorch engines capable of extremely fast, zero-overhead numerical evaluation across massive parameter grids.
+**TorchSymPy** solves a fundamental bottleneck in computational science: evaluating parameterized integrals over massive parameter grids is prohibitively slow with traditional scalar methods.
+
+When analyzing physics models, optics, or machine learning objectives, analytical integrals often must be computed across dense meshes containing millions of points. Standard solvers like SciPy process these sequentially on the CPU, which can take hours. **TorchSymPy** addresses this by bridging the gap between exact symbolic mathematics (`SymPy`) and parallel GPU execution (`PyTorch`). It takes symbolic integral expressions, performs structural optimizations, and automatically transcompiles them into native, highly optimized PyTorch kernels. Through this "compile-once, evaluate-many" architecture, you achieve zero-overhead numerical evaluation across enormous parameter sweeps—regularly executing thousands of times faster than standard numerical libraries.
 
 *Note: this module was first developed for [libphysics](https://github.com/ferhatpy/libphysics) — then split out into a standalone library to tackle generalized parallel computational bottlenecks in integration.*
 
@@ -93,13 +95,13 @@ The following table demonstrates the inherent trade-off between quadrature resol
 
 | Execution | Time per Point | Speedup vs SciPy | Accuracy (vs Analytical) |
 | :--- | :---: | :---: | :---: | 
-| **SciPy (nquad)** | 1.664 ms | 1.0x | $\sim 2.90 \times 10^{-9}$ |
-| **TorchSymPy (Vectorized, N=121)** | 0.00048 ms | **3,467x** | $\sim 2.07 \times 10^{-1}$ (Low N) |
-| **TorchSymPy (Batched, N=121)** | 0.00073 ms | **2,279x** | $\sim 2.07 \times 10^{-1}$ (Low N) |
-| **TorchSymPy (Vectorized, N=2001)** | 0.00854 ms | **194x** | $\sim 5.72 \times 10^{-5}$ (Medium N) |
-| **TorchSymPy (Batched, N=2001)** | 0.05164 ms | **32x** | $\sim 5.72 \times 10^{-5}$ (Medium N) |
-| **TorchSymPy (Vectorized, N=5001)** | 0.02589 ms | **64x** | $\sim 2.90 \times 10^{-9}$ (High N) |
-| **TorchSymPy (Batched, N=5001)** | 0.55701 ms | **3.0x** | $\sim 2.90 \times 10^{-9}$ (High N) |
+| **SciPy (nquad)** | 1.29816 ms | 1.0x | $\sim 2.41 \times 10^{-9}$ |
+| **TorchSymPy (Vectorized, N=121)** | 0.00056 ms | **2,320x** | $\sim 2.07 \times 10^{-1}$ (Low N) |
+| **TorchSymPy (Batched, N=121)** | 0.00030 ms | **4,264x** | $\sim 2.07 \times 10^{-1}$ (Low N) |
+| **TorchSymPy (Vectorized, N=2001)** | 0.00970 ms | **138x** | $\sim 5.72 \times 10^{-5}$ (Medium N) |
+| **TorchSymPy (Batched, N=2001)** | 0.00545 ms | **245x** | $\sim 5.72 \times 10^{-5}$ (Medium N) |
+| **TorchSymPy (Vectorized, N=5001)** | 0.02904 ms | **42x** | $\sim 2.90 \times 10^{-9}$ (High N) |
+| **TorchSymPy (Batched, N=5001)** | 0.01382 ms | **90x** | $\sim 2.90 \times 10^{-9}$ (High N) |
 
 *(Benchmarks run on an NVIDIA RTX GPU across a 10,000 parameter grid. `TorchSymPy` converges to parity with SciPy while remaining orders of magnitude faster at standard resolutions).*
 
@@ -108,7 +110,8 @@ The following table demonstrates the inherent trade-off between quadrature resol
 While `TorchSymPy` achieves numeric parity with `SciPy` for well-behaved integrals (like $\int x^{-x} dx$), evaluating conditionally convergent oscillatory integrals over infinite domains numerically pushes *all* quadrature engines to their breaking points. 
 
 Consider the famously difficult oscillatory integral:
-$ \int_0^\infty \frac{\sin(x)}{\sqrt{x^2 + 1}} dx $
+
+$$ \int_0^\infty \frac{\sin(x)}{\sqrt{x^2 + 1}} dx $$
 
 The true, analytical exact value (calculated symbolically via SymPy hypergeometric functions) is `0.873084`. However, if we force pure numerical evaluation without symbolic reduction:
 
@@ -120,6 +123,19 @@ The true, analytical exact value (calculated symbolically via SymPy hypergeometr
 | **TorchSymPy (`GaussLegendre`)** | `-1.343219` | `2.216` | Breaks due to mapped infinite oscillations |
 
 **Takeaway:** `TorchSymPy` provides incredible performance scaling and accurate results matching `SciPy` on standard mapping domains. However, for pathological integrands (like conditionally convergent oscillations at infinity), you should rely on `SymPy`'s exact symbolic analytical integrations *before* attempting numerical grid sweeps.
+
+### High-Dimensional Integrals & Monte Carlo
+
+When evaluating integrals in high dimensions ($d \ge 4$), standard tensor-product grids (like Gauss-Legendre) suffer from the *curse of dimensionality*. `TorchSymPy` natively supports `MonteCarlo` sampling through its vectorized backend to overcome this. 
+
+For example, evaluating an **8-Dimensional Gaussian Integral** $\int_{\mathbb{R}^8} e^{-|\mathbf{x}|^2} d\mathbf{x}$ using $5.76 \times 10^6$ evaluation points:
+
+| Method (8D Gaussian) | Output Value | Analytical Truth ($\pi^4$) |
+| :--- | :---: | :---: |
+| **TorchSymPy (MonteCarlo)** | `97.5273` | `97.4090` |
+| **TorchSymPy (GaussLegendre)** | `89.9769` | `97.4090` |
+
+*At this dimensionality, Monte Carlo successfully approximates the integral within $\sim 0.1\%$ error, while deterministic grids severely degrade given the exact same computational budget.*
 
 ## Running the Test Suite
 

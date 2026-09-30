@@ -7,26 +7,26 @@
 \midrule
 \multicolumn{5}{c}{\textbf{\makecell{1\_Gaussian: \\ $\bigint_{-\infty}^{\infty} e^{-p x^2}\,dx = \sqrt{\frac{\pi}{p}}$}}} \\
 \midrule
-SciPy \texttt{quad} & Auto & 0.10331 & 1.0$\times$ & 3.72e-15 \\
-SciPy \texttt{quad\_vec} & Auto & 0.18847 & 0.5$\times$ & 3.72e-15 \\
+SciPy \texttt{quad} & Auto & 0.13431 & 1.0$\times$ & 3.72e-15 \\
+SciPy \texttt{quad\_vec} & Auto & 0.21122 & 0.6$\times$ & 3.72e-15 \\
 \midrule
-TSP Vectorized & 121 & 0.00067 & 154.6$\times$ & 1.07e-14 \\
-TSP Batched & 121 & 0.00038 & 269.9$\times$ & 2.93e-14 \\
+TSP Vectorized & 121 & 0.00081 & 165.4$\times$ & 1.07e-14 \\
+TSP Batched & 121 & 0.00049 & 275.7$\times$ & 2.93e-14 \\
 \hdashline
-TSP Vectorized & 301 & 0.00146 & 71.7$\times$ & 2.09e-14 \\
-TSP Batched & 301 & 0.00081 & 128.9$\times$ & 9.19e-14 \\
+TSP Vectorized & 301 & 0.00196 & 76.6$\times$ & 2.09e-14 \\
+TSP Batched & 301 & 0.00096 & 156.2$\times$ & 9.19e-14 \\
 \hdashline
-TSP Vectorized & 501 & 0.00235 & 39.0$\times$ & 2.22e-14 \\
-TSP Batched & 501 & 0.00132 & 69.5$\times$ & 2.27e-13 \\
+TSP Vectorized & 501 & 0.00307 & 39.2$\times$ & 2.22e-14 \\
+TSP Batched & 501 & 0.00161 & 74.6$\times$ & 2.27e-13 \\
 \hdashline
-TSP Vectorized & 1001 & 0.00487 & 18.4$\times$ & 2.28e-13 \\
-TSP Batched & 1001 & 0.00266 & 33.7$\times$ & 1.49e-13 \\
+TSP Vectorized & 1001 & 0.00603 & 17.4$\times$ & 2.28e-13 \\
+TSP Batched & 1001 & 0.00311 & 33.6$\times$ & 1.49e-13 \\
 \hdashline
-TSP Vectorized & 2001 & 0.00988 & 9.8$\times$ & 4.58e-13 \\
-TSP Batched & 2001 & 0.00551 & 17.7$\times$ & 2.69e-13 \\
+TSP Vectorized & 2001 & 0.01178 & 8.7$\times$ & 4.58e-13 \\
+TSP Batched & 2001 & 0.00584 & 17.6$\times$ & 2.69e-13 \\
 \hdashline
-TSP Vectorized & 5001 & 0.03448 & 3.5$\times$ & 7.99e-14 \\
-TSP Batched & 5001 & 0.01397 & 8.7$\times$ & 1.05e-12 \\
+TSP Vectorized & 5001 & 0.04047 & 2.8$\times$ & 7.99e-14 \\
+TSP Batched & 5001 & 0.01719 & 6.7$\times$ & 1.05e-12 \\
 \bottomrule
 \end{tabular}
 }
@@ -43,26 +43,26 @@ TSP Batched & 5001 & 0.01397 & 8.7$\times$ & 1.05e-12 \\
 \midrule
 \multicolumn{5}{c}{\textbf{\makecell{2\_Fourier\_Gaussian: \\ $\bigint_{-\infty}^{\infty} e^{-x^2}e^{ipx}\,dx$ \\ $= \sqrt{\pi}\,e^{-p^2/4}$}}} \\
 \midrule
-SciPy \texttt{quad} & Auto & 1.88812 & 1.0$\times$ & 7.92e-10 \\
-SciPy \texttt{quad\_vec} & Auto & 8.61286 & 0.2$\times$ & 7.92e-10 \\
+SciPy \texttt{quad} & Auto & 2.23663 & 1.0$\times$ & 7.92e-10 \\
+SciPy \texttt{quad\_vec} & Auto & 10.40842 & 0.2$\times$ & 7.92e-10 \\
 \midrule
-TSP Vectorized & 121 & 0.00120 & 1578.1$\times$ & 2.65e-01 \\
-TSP Batched & 121 & 0.00077 & 2438.7$\times$ & 2.65e-01 \\
+TSP Vectorized & 121 & 0.00148 & 1506.8$\times$ & 2.65e-01 \\
+TSP Batched & 121 & 0.00099 & 2258.8$\times$ & 2.65e-01 \\
 \hdashline
-TSP Vectorized & 301 & 0.00313 & 580.3$\times$ & 6.58e-03 \\
-TSP Batched & 301 & 0.00163 & 1111.4$\times$ & 6.58e-03 \\
+TSP Vectorized & 301 & 0.00376 & 522.1$\times$ & 6.58e-03 \\
+TSP Batched & 301 & 0.00240 & 815.9$\times$ & 6.58e-03 \\
 \hdashline
-TSP Vectorized & 501 & 0.00500 & 355.9$\times$ & 4.58e-05 \\
-TSP Batched & 501 & 0.00285 & 624.1$\times$ & 4.58e-05 \\
+TSP Vectorized & 501 & 0.00570 & 323.2$\times$ & 4.58e-05 \\
+TSP Batched & 501 & 0.00358 & 513.7$\times$ & 4.58e-05 \\
 \hdashline
-TSP Vectorized & 1001 & 0.01016 & 172.7$\times$ & 9.88e-12 \\
-TSP Batched & 1001 & 0.00621 & 283.0$\times$ & 9.88e-12 \\
+TSP Vectorized & 1001 & 0.01135 & 164.5$\times$ & 9.88e-12 \\
+TSP Batched & 1001 & 0.00700 & 266.6$\times$ & 9.88e-12 \\
 \hdashline
-TSP Vectorized & 2001 & 0.02071 & 89.8$\times$ & 3.06e-13 \\
-TSP Batched & 2001 & 0.01225 & 151.9$\times$ & 1.81e-13 \\
+TSP Vectorized & 2001 & 0.02072 & 89.0$\times$ & 3.06e-13 \\
+TSP Batched & 2001 & 0.01309 & 141.0$\times$ & 1.81e-13 \\
 \hdashline
-TSP Vectorized & 5001 & 0.07997 & 24.7$\times$ & 5.00e-14 \\
-TSP Batched & 5001 & 0.03766 & 52.5$\times$ & 6.94e-13 \\
+TSP Vectorized & 5001 & 0.07477 & 26.5$\times$ & 5.00e-14 \\
+TSP Batched & 5001 & 0.04132 & 47.9$\times$ & 6.94e-13 \\
 \bottomrule
 \end{tabular}
 }
@@ -79,26 +79,26 @@ TSP Batched & 5001 & 0.03766 & 52.5$\times$ & 6.94e-13 \\
 \midrule
 \multicolumn{5}{c}{\textbf{\makecell{3\_Damped\_Cosine: \\ $\bigint_{0}^{\infty} e^{-x}\cos(px)\,dx$ \\ $= \frac{1}{1+p^2}$}}} \\
 \midrule
-SciPy \texttt{quad} & Auto & 1.35558 & 1.0$\times$ & 2.41e-09 \\
-SciPy \texttt{quad\_vec} & Auto & 4.12918 & 0.3$\times$ & 2.41e-09 \\
+SciPy \texttt{quad} & Auto & 1.29816 & 1.0$\times$ & 2.41e-09 \\
+SciPy \texttt{quad\_vec} & Auto & 3.85162 & 0.3$\times$ & 2.41e-09 \\
 \midrule
-TSP Vectorized & 121 & 0.00089 & 1528.0$\times$ & 2.07e-01 \\
-TSP Batched & 121 & 0.00039 & 3465.6$\times$ & 2.07e-01 \\
+TSP Vectorized & 121 & 0.00056 & 2320.0$\times$ & 2.07e-01 \\
+TSP Batched & 121 & 0.00030 & 4264.6$\times$ & 2.07e-01 \\
 \hdashline
-TSP Vectorized & 301 & 0.00159 & 828.2$\times$ & 5.83e-02 \\
-TSP Batched & 301 & 0.00070 & 1868.1$\times$ & 5.83e-02 \\
+TSP Vectorized & 301 & 0.00151 & 845.0$\times$ & 5.83e-02 \\
+TSP Batched & 301 & 0.00047 & 2731.2$\times$ & 5.83e-02 \\
 \hdashline
-TSP Vectorized & 501 & 0.00287 & 456.5$\times$ & 2.20e-02 \\
-TSP Batched & 501 & 0.00119 & 1104.2$\times$ & 2.20e-02 \\
+TSP Vectorized & 501 & 0.00256 & 487.7$\times$ & 2.20e-02 \\
+TSP Batched & 501 & 0.00094 & 1325.1$\times$ & 2.20e-02 \\
 \hdashline
-TSP Vectorized & 1001 & 0.00556 & 254.9$\times$ & 2.67e-03 \\
-TSP Batched & 1001 & 0.00281 & 504.5$\times$ & 2.67e-03 \\
+TSP Vectorized & 1001 & 0.00526 & 248.7$\times$ & 2.67e-03 \\
+TSP Batched & 1001 & 0.00264 & 495.6$\times$ & 2.67e-03 \\
 \hdashline
-TSP Vectorized & 2001 & 0.01105 & 154.9$\times$ & 5.72e-05 \\
-TSP Batched & 2001 & 0.00581 & 294.6$\times$ & 5.72e-05 \\
+TSP Vectorized & 2001 & 0.00970 & 138.0$\times$ & 5.72e-05 \\
+TSP Batched & 2001 & 0.00545 & 245.7$\times$ & 5.72e-05 \\
 \hdashline
-TSP Vectorized & 5001 & 0.03123 & 43.6$\times$ & 2.90e-09 \\
-TSP Batched & 5001 & 0.01553 & 87.6$\times$ & 2.90e-09 \\
+TSP Vectorized & 5001 & 0.02904 & 42.9$\times$ & 2.90e-09 \\
+TSP Batched & 5001 & 0.01382 & 90.2$\times$ & 2.90e-09 \\
 \bottomrule
 \end{tabular}
 }
