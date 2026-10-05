@@ -243,13 +243,40 @@ def _torch_sqrt(x: Any) -> torch.Tensor:
     return torch.sqrt(_as_float_tensor(x))
 
 
+class _ComplexErf(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        out = scipy_special.erf(x.detach().cpu().numpy())
+        return torch.as_tensor(out, device=x.device, dtype=x.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_tensors
+        grad_x = (2.0 / math.sqrt(math.pi)) * torch.exp(-x * x)
+        return grad_output * grad_x.conj()
+
+
+class _ComplexErfc(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        out = scipy_special.erfc(x.detach().cpu().numpy())
+        return torch.as_tensor(out, device=x.device, dtype=x.dtype)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, = ctx.saved_tensors
+        grad_x = -(2.0 / math.sqrt(math.pi)) * torch.exp(-x * x)
+        return grad_output * grad_x.conj()
+
+
 def _torch_erf(x: Any) -> Any:
     """Error function supporting real torch tensors and complex input."""
     if torch.is_tensor(x):
         if torch.is_complex(x):
             # torch.erf is not implemented for complex tensors.
-            out = scipy_special.erf(x.detach().cpu().numpy())
-            return torch.as_tensor(out, device=x.device, dtype=x.dtype)
+            return _ComplexErf.apply(x)
         return torch.erf(_as_float_tensor(x))
     return scipy_special.erf(x)
 
@@ -258,8 +285,7 @@ def _torch_erfc(x: Any) -> Any:
     """Complementary error function with a complex-input fallback."""
     if torch.is_tensor(x):
         if torch.is_complex(x):
-            out = scipy_special.erfc(x.detach().cpu().numpy())
-            return torch.as_tensor(out, device=x.device, dtype=x.dtype)
+            return _ComplexErfc.apply(x)
         return torch.erfc(_as_float_tensor(x))
     return scipy_special.erfc(x)
 
@@ -2163,9 +2189,9 @@ class TorchSymPy:
         "tan": "tangent",
         "algebraic": "algebraic",
         "rational": "algebraic",
-        "tanh-sinh": "tanh-sinh",
-        "tanh_sinh": "tanh-sinh",
-        "tanhsinh": "tanh-sinh",
+        "sinh-of-atanh": "sinh-of-atanh",
+        "sinh_of_atanh": "sinh-of-atanh",
+        "sinh_atanh": "sinh-of-atanh",
     }
 
     @staticmethod
@@ -2177,7 +2203,7 @@ class TorchSymPy:
         except KeyError:
             raise ValueError(
                 "Unknown change_of_variables_method. Expected one of "
-                "{'tangent', 'algebraic', 'tanh-sinh'}. "
+                "{'tangent', 'algebraic', 'sinh-of-atanh'}. "
                 f"Got: {change_of_variables_method}"
             ) from None
 
@@ -2258,7 +2284,7 @@ class TorchSymPy:
             else:
                 raise ValueError(f"Unexpected limit pattern in algebraic transform: ({lower}, {upper})")
 
-        else:  # "tanh-sinh"
+        else:  # "sinh-of-atanh"
             # Finite-interval parameter t in (-1,1) or (0,1) mapped through sinh(atanh(t)).
             core = sinh(atanh(t_var))
             if lower == -oo and upper == oo:
@@ -2271,7 +2297,7 @@ class TorchSymPy:
                 mapped = upper - core ** 2
                 open_interval = (0.0, 1.0)
             else:
-                raise ValueError(f"Unexpected limit pattern in tanh-sinh transform: ({lower}, {upper})")
+                raise ValueError(f"Unexpected limit pattern in sinh-of-atanh transform: ({lower}, {upper})")
 
         jacobian = diff(mapped, t_var)
         domain = self._inset_open_interval(open_interval[0], open_interval[1], eps)
@@ -2519,7 +2545,7 @@ class TorchSymPy:
             Custom ``lambdify`` module list.  ``None`` → default torch mapping
             from :meth:`_default_modules`.
         change_of_variables_method : str, optional
-            ``"tangent"``, ``"algebraic"`` or ``"tanh-sinh"``.
+            ``"tangent"``, ``"algebraic"`` or ``"sinh-of-atanh"``.
         cov_eps : float, optional
             Small inward shift for transformed open intervals to avoid
             evaluating at a singular endpoint.

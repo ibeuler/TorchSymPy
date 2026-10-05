@@ -117,3 +117,24 @@ def test_hard_integrals_from_notebook(
             
         scipy_tensor = torch.tensor(scipy_result, device=device, dtype=dtype)
         assert torch.allclose(re, scipy_tensor, atol=1e-5, rtol=1e-5)
+
+
+def test_complex_erf_erfc_autograd(device, dtype):
+    from torchsympy.main import _ComplexErf, _ComplexErfc
+    import torch
+    
+    # Skip if we don't have float64 for gradcheck since it requires high precision
+    if dtype != torch.float64:
+        import pytest
+        pytest.skip("gradcheck requires float64")
+        
+    x = torch.randn(2, 2, dtype=torch.complex128, device=device, requires_grad=True)
+    
+    def func_erf(inp):
+        return _ComplexErf.apply(inp)
+        
+    def func_erfc(inp):
+        return _ComplexErfc.apply(inp)
+        
+    assert torch.autograd.gradcheck(func_erf, (x,), eps=1e-6, atol=1e-4)
+    assert torch.autograd.gradcheck(func_erfc, (x,), eps=1e-6, atol=1e-4)
