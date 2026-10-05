@@ -29,7 +29,7 @@ try:
 	except Exception:
 		__version__ = _pkg_version("torchsympy")
 except Exception:
-	__version__ = "0.4.2"
+	__version__ = "0.4.3"
 
 __all__ = [
 	"MAX_ELEMENTS_PER_EVALUATION",
