@@ -167,10 +167,13 @@ def setup_logging(enable: bool = False, level: str = "INFO", *, sink=None) -> No
     # Manage torchquad's noisy debug/info logs
     try:
         import torchquad
+        from loguru import logger as _tq_logger
         if not enable:
-            torchquad.set_log_level("WARNING")
+            _tq_logger.disable("torchquad")
         else:
-            torchquad.set_log_level(level)
+            _tq_logger.enable("torchquad")
+            if hasattr(torchquad, "set_log_level"):
+                torchquad.set_log_level(level)
     except (ImportError, AttributeError):
         pass
 
